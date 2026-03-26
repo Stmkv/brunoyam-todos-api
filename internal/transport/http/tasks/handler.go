@@ -18,6 +18,17 @@ func New(uc usecase.UseCase) *Handler {
 	return &Handler{uc: uc}
 }
 
+// Create godoc
+// @Summary Create task
+// @Description create new task
+// @Tags tasks
+// @Accept json
+// @Produce json
+// @Param input body createTaskRequest true "task"
+// @Success 201 {object} taskResponse
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /tasks [post]
 func (h *Handler) Create(c *gin.Context) {
 	var req createTaskRequest
 
@@ -35,6 +46,15 @@ func (h *Handler) Create(c *gin.Context) {
 	c.JSON(http.StatusCreated, toResponse(task))
 }
 
+// GetAll godoc
+// @Summary Get all tasks
+// @Description Get all tasks
+// @Tags tasks
+// @Produce json
+// @Success 200 {array} taskResponse
+// @Failure 400 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /tasks [get]
 func (h *Handler) GetAll(c *gin.Context) {
 	tasks, err := h.uc.GetAll(c.Request.Context())
 	if err != nil {
@@ -50,6 +70,17 @@ func (h *Handler) GetAll(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
+// GetByID godoc
+// @Summary Get task by ID
+// @Description Get task by ID
+// @Tags tasks
+// @Produce json
+// @Param id path string true "Task ID"
+// @Success 200 {object} taskResponse
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /tasks/{id} [get]
 func (h *Handler) GetByID(c *gin.Context) {
 	id := c.Param("id")
 
@@ -62,6 +93,19 @@ func (h *Handler) GetByID(c *gin.Context) {
 	c.JSON(http.StatusOK, toResponse(task))
 }
 
+// Update godoc
+// @Summary Update task
+// @Description Update task
+// @Tags tasks
+// @Accept json
+// @Produce json
+// @Param id path string true "Task ID"
+// @Param input body updateTaskRequest true "task"
+// @Success 200 {object} taskResponse
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /tasks/{id} [put]
 func (h *Handler) Update(c *gin.Context) {
 	id := c.Param("id")
 
@@ -69,6 +113,10 @@ func (h *Handler) Update(c *gin.Context) {
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid request"})
 		return
+	}
+	err := domain.ValidateStatus(req.Status)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 	}
 
 	task, err := h.uc.Update(
@@ -86,6 +134,17 @@ func (h *Handler) Update(c *gin.Context) {
 	c.JSON(http.StatusOK, toResponse(task))
 }
 
+// Delete godoc
+// @Summary Delete task
+// @Description Delete task
+// @Tags tasks
+// @Produce json
+// @Param id path string true "Task ID"
+// @Success 200 {object} taskResponse
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Failure 500 {object} map[string]string
+// @Router /tasks/{id} [delete]
 func (h *Handler) Delete(c *gin.Context) {
 	id := c.Param("id")
 
@@ -102,7 +161,7 @@ func toResponse(t *domain.Task) taskResponse {
 		ID:          string(t.TID),
 		Title:       t.Title,
 		Description: t.Description,
-		Status:      int(t.Status),
+		Status:      t.Status,
 	}
 }
 

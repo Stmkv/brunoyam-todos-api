@@ -1,5 +1,7 @@
 package tasks
 
+import "todos-api/internal/domain/tasks"
+
 type createTaskRequest struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
@@ -8,12 +10,12 @@ type createTaskRequest struct {
 type updateTaskRequest struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
-	Status      int    `json:"status"`
+	Status      string `json:"status"`
 }
 
 type taskResponse struct {
-	ID          string `json:"id"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	Status      int    `json:"status"`
+	ID          string       `json:"id"`
+	Title       string       `json:"title"`
+	Description string       `json:"description"`
+	Status      tasks.Status `json:"status"`
 }

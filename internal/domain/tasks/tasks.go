@@ -1,11 +1,11 @@
 package tasks
 
-type Status int
+type Status string
 
 const (
-	StatusNew Status = iota
-	StatusInProcess
-	StatusCompleted
+	StatusNew       Status = "new"
+	StatusInProcess Status = "in_process"
+	StatusCompleted Status = "completed"
 )
 
 type Task struct {
@@ -31,18 +31,13 @@ func NewTask(tid string, title string, description string) (*Task, error) {
 	}, nil
 }
 
-func (t *Task) Start() error {
-	if t.Status != StatusNew {
-		return ErrCannotStart
+func ValidateStatus(s string) error {
+	switch Status(s) {
+	case StatusNew,
+		StatusInProcess,
+		StatusCompleted:
+		return nil
+	default:
+		return ErrStatusNotFound
 	}
-	t.Status = StatusInProcess
-	return nil
-}
-
-func (t *Task) Complete() error {
-	if t.Status != StatusInProcess {
-		return ErrCannotComplete
-	}
-	t.Status = StatusCompleted
-	return nil
 }

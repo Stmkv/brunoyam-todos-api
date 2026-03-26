@@ -7,6 +7,10 @@ import (
 	tasksUsecase "todos-api/internal/usecase/tasks"
 
 	"github.com/gin-gonic/gin"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
+
+	_ "todos-api/docs" //
 )
 
 type Server struct {
@@ -34,6 +38,8 @@ func New(
 
 func configureRouter(th *tasksHandler.Handler) *gin.Engine {
 	r := gin.Default()
+
+	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	tasksGroup := r.Group("/tasks")
 	tasksHandler.RegisterRoutes(tasksGroup, th)
