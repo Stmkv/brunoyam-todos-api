@@ -3,12 +3,15 @@ package middleware
 import (
 	"net/http"
 	"strings"
-	"todos-api/internal/usecase/auth"
 
 	"github.com/gin-gonic/gin"
 )
 
-func AuthMiddleware() gin.HandlerFunc {
+type TokenParser interface {
+	Parse(token string) (string, error)
+}
+
+func AuthMiddleware(parser TokenParser) gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		authHeader := ctx.GetHeader("Authorization")
 
@@ -17,11 +20,17 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		tokenString := strings.Split(authHeader, " ")[1]
+		parts := strings.Split(authHeader, " ")
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid auth header"})
+			return
+		}
 
-		uid, err := auth.ParseToken(tokenString)
+		tokenString := parts[1]
+
+		uid, err := parser.Parse(tokenString)
 		if err != nil {
-			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid token"})
 			return
 		}
 

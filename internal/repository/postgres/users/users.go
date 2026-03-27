@@ -128,3 +128,22 @@ func (r *Repository) Delete(ctx context.Context, id string) error {
 
 	return nil
 }
+
+func (r *Repository) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
+	row := r.db.QueryRow(ctx, `SELECT uid, name, email, password FROM users WHERE email = $1`, email)
+
+	result := new(domain.User)
+	err := row.Scan(
+		&result.UID,
+		&result.Name,
+		&result.Email,
+		&result.Password,
+	)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrUserNotFound
+		}
+		return nil, err
+	}
+	return result, nil
+}

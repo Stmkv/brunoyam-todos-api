@@ -12,9 +12,13 @@ import (
 	server "todos-api/internal/app/http"
 	taskRepo "todos-api/internal/repository/postgres/tasks"
 	userRepo "todos-api/internal/repository/postgres/users"
+	authUsecase "todos-api/internal/usecase/auth"
 	taskUsecase "todos-api/internal/usecase/tasks"
 
 	userUsecase "todos-api/internal/usecase/users"
+
+	"todos-api/internal/lib/hasher"
+	"todos-api/internal/lib/jwt"
 )
 
 // @securityDefinitions.apikey BearerAuth
@@ -38,12 +42,16 @@ func main() {
 	app.RunMigrations(cfg.DatabaseURL)
 
 	tr := taskRepo.NewRepository(db)
-	tuc := taskUsecase.New(tr)
-
 	ur := userRepo.NewRepository(db)
-	uuc := userUsecase.New(ur)
 
-	srv := server.New(":"+cfg.HTTPPort, tuc, uuc)
+	bcryptHasher := hasher.New()
+	jwtManager := jwt.New(cfg.JWTSecret)
+
+	tuc := taskUsecase.New(tr)
+	uuc := userUsecase.New(ur, bcryptHasher)
+	auc := authUsecase.New(ur, bcryptHasher, jwtManager)
+
+	srv := server.New(":"+cfg.HTTPPort, tuc, uuc, auc, jwtManager)
 
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)

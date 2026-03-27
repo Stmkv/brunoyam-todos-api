@@ -3,18 +3,20 @@ package users
 import (
 	"context"
 	domain "todos-api/internal/domain/users"
+	"todos-api/internal/lib/hasher"
 
 	"github.com/google/uuid"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type useCase struct {
-	repo domain.Repository
+	repo   domain.Repository
+	hasher hasher.Hasher
 }
 
-func New(repo domain.Repository) UseCase {
+func New(repo domain.Repository, hasher hasher.Hasher) UseCase {
 	return &useCase{
-		repo: repo,
+		repo:   repo,
+		hasher: hasher,
 	}
 }
 
@@ -32,12 +34,13 @@ func (uc *useCase) GetByID(ctx context.Context, id string) (*domain.User, error)
 
 func (uc *useCase) Create(ctx context.Context, name, email, password string) (*domain.User, error) {
 	uid := uuid.New().String()
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+
+	hash, err := uc.hasher.Hash(password)
 	if err != nil {
 		return nil, err
 	}
 
-	user, err := domain.NewUser(uid, name, email, string(hash))
+	user, err := domain.NewUser(uid, name, email, hash)
 	if err != nil {
 		return nil, err
 	}
