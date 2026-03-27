@@ -3,8 +3,11 @@ package server
 import (
 	"context"
 	"net/http"
+	"todos-api/internal/transport/http/middleware"
 	tasksHandler "todos-api/internal/transport/http/tasks"
+	usersHandler "todos-api/internal/transport/http/users"
 	tasksUsecase "todos-api/internal/usecase/tasks"
+	usersUsecase "todos-api/internal/usecase/users"
 
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
@@ -20,14 +23,16 @@ type Server struct {
 func New(
 	addr string,
 	taskUC tasksUsecase.UseCase,
+	userUC usersUsecase.UseCase,
 ) *Server {
 	srv := &http.Server{
 		Addr: addr,
 	}
 
 	th := tasksHandler.New(taskUC)
+	uh := usersHandler.New(userUC)
 
-	r := configureRouter(th)
+	r := configureRouter(th, uh)
 
 	srv.Handler = r
 
@@ -36,13 +41,21 @@ func New(
 	}
 }
 
-func configureRouter(th *tasksHandler.Handler) *gin.Engine {
+func configureRouter(th *tasksHandler.Handler, uh *usersHandler.Handler) *gin.Engine {
 	r := gin.Default()
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
 	tasksGroup := r.Group("/tasks")
+	tasksGroup.Use(middleware.AuthMiddleware())
 	tasksHandler.RegisterRoutes(tasksGroup, th)
+
+	publicUsers := r.Group("/users")
+	usersHandler.RegisterPublicRoutes(publicUsers, uh)
+
+	privateUsers := r.Group("/users")
+	privateUsers.Use(middleware.AuthMiddleware())
+	usersHandler.RegisterPrivateRoutes(privateUsers, uh)
 
 	return r
 }
