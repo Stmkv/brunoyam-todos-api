@@ -41,12 +41,14 @@ func main() {
 	}
 	app.RunMigrations(cfg.DatabaseURL)
 
+	// Repository
 	tr := taskRepo.NewRepository(db)
 	ur := userRepo.NewRepository(db)
 
 	bcryptHasher := hasher.New()
 	jwtManager := jwt.New(cfg.JWTSecret)
 
+	// Usecase
 	tuc := taskUsecase.New(tr)
 	uuc := userUsecase.New(ur, bcryptHasher)
 	auc := authUsecase.New(ur, bcryptHasher, jwtManager)
