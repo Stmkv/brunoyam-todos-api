@@ -18,5 +18,20 @@ services:
     ports:
       - "8080:8080"
 
+  pgbouncer:
+    image: edoburu/pgbouncer
+    environment:
+      - DATABASE_URL=${PGBOUNCER_DATABASE_URL}
+      - POOL_MODE=${POOL_MODE}
+      - MAX_CLIENT_CONN=${MAX_CLIENT_CONN}
+      - DEFAULT_POOL_SIZE=${DEFAULT_POOL_SIZE}
+      - RESERVER_POOL_SIZE=${RESERVER_POOL_SIZE}
+      - SERVER_IDLE_TIMEOUT=${SERVER_IDLE_TIMEOUT}
+      - AUTH_TYPE=${AUTH_TYPE}
+    ports:
+      - "6432:5432"
+    depends_on:
+      - db
+
 volumes:
   postgres_data:
