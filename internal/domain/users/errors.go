@@ -3,9 +3,9 @@ package users
 import "errors"
 
 var (
-	ErrUserNotFound      = errors.New("task not found")
-	ErrUserIsNil         = errors.New("task is nil")
-	ErrUserAlreadyExists = errors.New("task already exists")
+	ErrUserNotFound      = errors.New("user not found")
+	ErrUserIsNil         = errors.New("user is nil")
+	ErrUserAlreadyExists = errors.New("user already exists")
 	ErrEmptyUID          = errors.New("empty user uid")
 	ErrEmptyName         = errors.New("empty user name")
 	ErrEmptyEmail        = errors.New("empty user email")

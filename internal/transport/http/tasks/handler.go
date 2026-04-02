@@ -121,6 +121,7 @@ func (h *Handler) Update(c *gin.Context) {
 	err := domain.ValidateStatus(req.Status)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
 	}
 
 	task, err := h.uc.Update(
