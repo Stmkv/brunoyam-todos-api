@@ -3,6 +3,7 @@ package auth
 import (
 	"errors"
 	"net/http"
+	"todos-api/internal/config"
 
 	domain "todos-api/internal/domain/auth"
 	usecase "todos-api/internal/usecase/auth"
@@ -11,11 +12,15 @@ import (
 )
 
 type Handler struct {
-	uc usecase.UseCase
+	uc  usecase.UseCase
+	cfg *config.Config
 }
 
 func New(uc usecase.UseCase) *Handler {
-	return &Handler{uc: uc}
+	return &Handler{
+		uc:  uc,
+		cfg: config.MustLoad(),
+	}
 }
 
 // Login godoc
@@ -48,9 +53,18 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
+	c.SetCookie(
+		"refresh_token",
+		refresh,
+		h.cfg.CookiesMaxAge,
+		h.cfg.CookiesPath,
+		h.cfg.CookiesDomain,
+		h.cfg.CookiesSecure,
+		h.cfg.CookiesHttpOnly,
+	)
+
 	c.JSON(http.StatusOK, loginResponse{
-		AccessToken:  access,
-		RefreshToken: refresh,
+		AccessToken: access,
 	})
 }
 
