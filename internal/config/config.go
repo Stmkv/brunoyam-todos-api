@@ -6,16 +6,18 @@ import (
 )
 
 type Config struct {
-	HTTPPort    string
-	DatabaseURL string
-	JWTSecret   string
+	HTTPPort             string
+	DatabaseURL          string
+	JWTSecret            string
+	FilePathForSaveTasks string
 }
 
 func MustLoad() *Config {
 	cfg := &Config{
-		HTTPPort:    getEnv("HTTP_PORT", "8080"),
-		DatabaseURL: getEnv("DATABASE_URL", ""),
-		JWTSecret:   getEnv("JWT_SECRET", ""),
+		HTTPPort:             getEnv("HTTP_PORT", "8080"),
+		DatabaseURL:          getEnv("DATABASE_URL", ""),
+		JWTSecret:            getEnv("JWT_SECRET", ""),
+		FilePathForSaveTasks: getEnv("FILE_PATH_FOR_SAVE_TASKS", ""),
 	}
 
 	if cfg.DatabaseURL == "" {

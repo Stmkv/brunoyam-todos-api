@@ -10,8 +10,9 @@ import (
 	"github.com/joho/godotenv"
 
 	server "todos-api/internal/app/http"
-	taskRepo "todos-api/internal/repository/postgres/tasks"
-	userRepo "todos-api/internal/repository/postgres/users"
+	jsonTaskRepo "todos-api/internal/repository/json/tasks"
+	postgresTaskRepo "todos-api/internal/repository/postgres/tasks"
+	postgresUserRepo "todos-api/internal/repository/postgres/users"
 	authUsecase "todos-api/internal/usecase/auth"
 	taskUsecase "todos-api/internal/usecase/tasks"
 
@@ -36,14 +37,22 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if err := db.Ping(context.Background()); err != nil {
-		log.Fatal(err)
+	if err := db.Ping(context.Background()); err == nil {
+		app.RunMigrations(cfg.DatabaseURL)
 	}
-	app.RunMigrations(cfg.DatabaseURL)
 
-	// Repository
-	tr := taskRepo.NewRepository(db)
-	ur := userRepo.NewRepository(db)
+	var tr taskUsecase.Repository
+	var ur userUsecase.Repository
+
+	errPgConnection := db.Ping(context.Background())
+	if errPgConnection != nil {
+		// Repository json
+		tr = jsonTaskRepo.NewRepository(cfg.FilePathForSaveTasks)
+	} else {
+		// Repository postgres
+		tr = postgresTaskRepo.NewRepository(db)
+		ur = postgresUserRepo.NewRepository(db)
+	}
 
 	bcryptHasher := hasher.New()
 	jwtManager := jwt.New(cfg.JWTSecret)
