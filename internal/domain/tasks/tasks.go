@@ -10,12 +10,13 @@ const (
 
 type Task struct {
 	TID         string
+	UserID      string
 	Title       string
 	Description string
 	Status      Status
 }
 
-func NewTask(tid string, title string, description string) (*Task, error) {
+func NewTask(tid string, userID string, title string, description string) (*Task, error) {
 	if tid == "" {
 		return nil, ErrEmptyTID
 	}
@@ -25,6 +26,7 @@ func NewTask(tid string, title string, description string) (*Task, error) {
 
 	return &Task{
 		TID:         tid,
+		UserID:      userID,
 		Title:       title,
 		Description: description,
 		Status:      StatusNew,

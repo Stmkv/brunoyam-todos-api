@@ -71,14 +71,25 @@ func (r *Repository) write(tasks []*domain.Task) error {
 	return os.WriteFile(r.filePath, data, 0644)
 }
 
-func (r *Repository) GetAll(_ context.Context) ([]*domain.Task, error) {
+func (r *Repository) GetAll(_ context.Context, userID string) ([]*domain.Task, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	return r.read()
 
+	all, err := r.read()
+	if err != nil {
+		return nil, err
+	}
+
+	var result []*domain.Task
+	for _, t := range all {
+		if t.UserID == userID {
+			result = append(result, t)
+		}
+	}
+	return result, nil
 }
 
-func (r *Repository) GetByID(_ context.Context, id string) (*domain.Task, error) {
+func (r *Repository) GetByID(_ context.Context, id, userID string) (*domain.Task, error) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	tasks, err := r.read()
@@ -86,11 +97,11 @@ func (r *Repository) GetByID(_ context.Context, id string) (*domain.Task, error)
 		return nil, err
 	}
 	for _, task := range tasks {
-		if task.TID == id {
+		if task.TID == id && task.UserID == userID {
 			return task, nil
 		}
 	}
-	return nil, errors.New("task not found")
+	return nil, domain.ErrTaskNotFound
 }
 
 func (r *Repository) Create(_ context.Context, task *domain.Task) error {
@@ -113,7 +124,7 @@ func (r *Repository) Update(_ context.Context, task *domain.Task) error {
 	}
 
 	for i := range tasksList {
-		if tasksList[i].TID == task.TID {
+		if tasksList[i].TID == task.TID && tasksList[i].UserID == task.UserID {
 			tasksList[i] = task
 
 			return r.write(tasksList)
@@ -123,19 +134,19 @@ func (r *Repository) Update(_ context.Context, task *domain.Task) error {
 	return errors.New("task not found")
 }
 
-func (r *Repository) Delete(_ context.Context, id string) error {
+func (r *Repository) Delete(_ context.Context, id, userID string) error {
 	tasksList, err := r.read()
 	if err != nil {
 		return err
 	}
 
 	for i := range tasksList {
-		if tasksList[i].TID == id {
+		if tasksList[i].TID == id && tasksList[i].UserID == userID {
 			tasksList = append(tasksList[:i], tasksList[i+1:]...)
 
 			return r.write(tasksList)
 		}
 	}
 
-	return errors.New("task not found")
+	return domain.ErrTaskNotFound
 }

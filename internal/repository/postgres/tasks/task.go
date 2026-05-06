@@ -22,9 +22,10 @@ func NewRepository(db *pgxpool.Pool) *Repository {
 	}
 }
 
-func (r *Repository) GetAll(ctx context.Context) ([]*domain.Task, error) {
+func (r *Repository) GetAll(ctx context.Context, userID string) ([]*domain.Task, error) {
 	rows, err := r.db.Query(ctx,
-		`SELECT tid, title, description, status FROM tasks`,
+		`SELECT tid, user_id, title, description, status FROM tasks WHERE user_id = $1`,
+		userID,
 	)
 	if err != nil {
 		return nil, err
@@ -37,6 +38,7 @@ func (r *Repository) GetAll(ctx context.Context) ([]*domain.Task, error) {
 
 		err := rows.Scan(
 			&t.TID,
+			&t.UserID,
 			&t.Title,
 			&t.Description,
 			&t.Status,
@@ -52,12 +54,16 @@ func (r *Repository) GetAll(ctx context.Context) ([]*domain.Task, error) {
 	return result, nil
 }
 
-func (r *Repository) GetByID(ctx context.Context, id string) (*domain.Task, error) {
-	row := r.db.QueryRow(ctx, `SELECT tid, title, description, status  FROM tasks WHERE tid = $1`, id)
+func (r *Repository) GetByID(ctx context.Context, id, userID string) (*domain.Task, error) {
+	row := r.db.QueryRow(ctx,
+		`SELECT tid, user_id, title, description, status FROM tasks WHERE tid = $1 AND user_id = $2`,
+		id, userID,
+	)
 
 	result := new(domain.Task)
 	err := row.Scan(
 		&result.TID,
+		&result.UserID,
 		&result.Title,
 		&result.Description,
 		&result.Status,
@@ -76,14 +82,14 @@ func (r *Repository) Create(ctx context.Context, task *domain.Task) error {
 		return domain.ErrTaskIsNil
 	}
 	_, err := r.db.Exec(ctx,
-		`INSERT INTO tasks (tid, title, description, status) VALUES ($1, $2, $3, $4)`,
+		`INSERT INTO tasks (tid, user_id, title, description, status) VALUES ($1, $2, $3, $4, $5)`,
 		task.TID,
+		task.UserID,
 		task.Title,
 		task.Description,
 		task.Status,
 	)
 
-	// Не знаю насколько правильно. https://www.postgresql.org/docs/current/errcodes-appendix.html, действительно postgres кидает эти коды и их так обрабатывают?
 	if err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) && pgErr.Code == postgres.ErrCodeUniqueViolation {
@@ -100,27 +106,28 @@ func (r *Repository) Update(ctx context.Context, task *domain.Task) error {
 	}
 
 	commandTag, err := r.db.Exec(ctx,
-		`UPDATE tasks SET title = $1, description = $2, status = $3 WHERE tid = $4`,
+		`UPDATE tasks SET title = $1, description = $2, status = $3 WHERE tid = $4 AND user_id = $5`,
 		task.Title,
 		task.Description,
 		task.Status,
 		task.TID,
+		task.UserID,
 	)
-
-	if commandTag.RowsAffected() == 0 {
-		return domain.ErrTaskNotFound
-	}
 
 	if err != nil {
 		return fmt.Errorf("update task: %s %w", task.TID, err)
 	}
+	if commandTag.RowsAffected() == 0 {
+		return domain.ErrTaskNotFound
+	}
+
 	return nil
 }
 
-func (r *Repository) Delete(ctx context.Context, id string) error {
+func (r *Repository) Delete(ctx context.Context, id, userID string) error {
 	commandTag, err := r.db.Exec(ctx,
-		"DELETE FROM tasks WHERE tid = $1",
-		id,
+		"DELETE FROM tasks WHERE tid = $1 AND user_id = $2",
+		id, userID,
 	)
 
 	if err != nil {

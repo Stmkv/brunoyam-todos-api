@@ -8,11 +8,11 @@ import (
 )
 
 type Repository interface {
-	GetAll(ctx context.Context) ([]*domain.Task, error)
-	GetByID(ctx context.Context, id string) (*domain.Task, error)
+	GetAll(ctx context.Context, userID string) ([]*domain.Task, error)
+	GetByID(ctx context.Context, id, userID string) (*domain.Task, error)
 	Create(ctx context.Context, task *domain.Task) error
 	Update(ctx context.Context, task *domain.Task) error
-	Delete(ctx context.Context, id string) error
+	Delete(ctx context.Context, id, userID string) error
 }
 
 type useCase struct {
@@ -25,22 +25,22 @@ func New(repo Repository) UseCase {
 	}
 }
 
-func (uc *useCase) GetAll(ctx context.Context) ([]*domain.Task, error) {
-	return uc.repo.GetAll(ctx)
+func (uc *useCase) GetAll(ctx context.Context, userID string) ([]*domain.Task, error) {
+	return uc.repo.GetAll(ctx, userID)
 }
 
-func (uc *useCase) GetByID(ctx context.Context, id string) (*domain.Task, error) {
+func (uc *useCase) GetByID(ctx context.Context, id, userID string) (*domain.Task, error) {
 	if id == "" {
 		return nil, domain.ErrEmptyTID
 	}
 
-	return uc.repo.GetByID(ctx, id)
+	return uc.repo.GetByID(ctx, id, userID)
 }
 
-func (uc *useCase) Create(ctx context.Context, title, description string) (*domain.Task, error) {
+func (uc *useCase) Create(ctx context.Context, userID, title, description string) (*domain.Task, error) {
 	id := uuid.New().String()
 
-	task, err := domain.NewTask(id, title, description)
+	task, err := domain.NewTask(id, userID, title, description)
 	if err != nil {
 		return nil, err
 	}
@@ -52,12 +52,12 @@ func (uc *useCase) Create(ctx context.Context, title, description string) (*doma
 	return task, nil
 }
 
-func (uc *useCase) Update(ctx context.Context, id, title, description string, status domain.Status) (*domain.Task, error) {
+func (uc *useCase) Update(ctx context.Context, id, userID, title, description string, status domain.Status) (*domain.Task, error) {
 	if id == "" {
 		return nil, domain.ErrEmptyTID
 	}
 
-	task, err := uc.repo.GetByID(ctx, id)
+	task, err := uc.repo.GetByID(ctx, id, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -73,10 +73,10 @@ func (uc *useCase) Update(ctx context.Context, id, title, description string, st
 	return task, nil
 }
 
-func (uc *useCase) Delete(ctx context.Context, id string) error {
+func (uc *useCase) Delete(ctx context.Context, id, userID string) error {
 	if id == "" {
 		return domain.ErrEmptyTID
 	}
 
-	return uc.repo.Delete(ctx, id)
+	return uc.repo.Delete(ctx, id, userID)
 }

@@ -31,6 +31,12 @@ func New(uc usecase.UseCase) *Handler {
 // @Security BearerAuth
 // @Router /tasks [post]
 func (h *Handler) Create(c *gin.Context) {
+	userID, ok := c.Get("uid")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
 	var req createTaskRequest
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -38,7 +44,7 @@ func (h *Handler) Create(c *gin.Context) {
 		return
 	}
 
-	task, err := h.uc.Create(c.Request.Context(), req.Title, req.Description)
+	task, err := h.uc.Create(c.Request.Context(), userID.(string), req.Title, req.Description)
 	if err != nil {
 		handleError(c, err)
 		return
@@ -58,7 +64,13 @@ func (h *Handler) Create(c *gin.Context) {
 // @Security BearerAuth
 // @Router /tasks [get]
 func (h *Handler) GetAll(c *gin.Context) {
-	tasks, err := h.uc.GetAll(c.Request.Context())
+	userID, ok := c.Get("uid")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
+	tasks, err := h.uc.GetAll(c.Request.Context(), userID.(string))
 	if err != nil {
 		handleError(c, err)
 		return
@@ -85,9 +97,15 @@ func (h *Handler) GetAll(c *gin.Context) {
 // @Security BearerAuth
 // @Router /tasks/{id} [get]
 func (h *Handler) GetByID(c *gin.Context) {
+	userID, ok := c.Get("uid")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
 	id := c.Param("id")
 
-	task, err := h.uc.GetByID(c.Request.Context(), id)
+	task, err := h.uc.GetByID(c.Request.Context(), id, userID.(string))
 	if err != nil {
 		handleError(c, err)
 		return
@@ -111,6 +129,12 @@ func (h *Handler) GetByID(c *gin.Context) {
 // @Security BearerAuth
 // @Router /tasks/{id} [put]
 func (h *Handler) Update(c *gin.Context) {
+	userID, ok := c.Get("uid")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+
 	id := c.Param("id")
 
 	var req updateTaskRequest
@@ -127,6 +151,7 @@ func (h *Handler) Update(c *gin.Context) {
 	task, err := h.uc.Update(
 		c.Request.Context(),
 		id,
+		userID.(string),
 		req.Title,
 		req.Description,
 		domain.Status(req.Status),
@@ -152,9 +177,14 @@ func (h *Handler) Update(c *gin.Context) {
 // @Security BearerAuth
 // @Router /tasks/{id} [delete]
 func (h *Handler) Delete(c *gin.Context) {
-	id := c.Param("id")
+	userID, ok := c.Get("uid")
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
 
-	if err := h.uc.Delete(c.Request.Context(), id); err != nil {
+	id := c.Param("id")
+	if err := h.uc.Delete(c.Request.Context(), id, userID.(string)); err != nil {
 		handleError(c, err)
 		return
 	}
