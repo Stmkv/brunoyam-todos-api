@@ -7,6 +7,10 @@ import (
 	usersDomain "todos-api/internal/domain/users"
 )
 
+type UserRepository interface {
+	GetByEmail(ctx context.Context, email string) (*usersDomain.User, error)
+}
+
 type Hasher interface {
 	Compare(hash, password string) bool
 }
@@ -17,13 +21,13 @@ type TokenManager interface {
 }
 
 type useCase struct {
-	userRepo     usersDomain.Repository
+	userRepo     UserRepository
 	hasher       Hasher
 	tokenManager TokenManager
 }
 
 func New(
-	userRepo usersDomain.Repository,
+	userRepo UserRepository,
 	hasher Hasher,
 	tokenManager TokenManager,
 ) UseCase {

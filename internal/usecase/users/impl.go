@@ -8,12 +8,21 @@ import (
 	"github.com/google/uuid"
 )
 
+type Repository interface {
+	GetAll(ctx context.Context) ([]*domain.User, error)
+	GetByID(ctx context.Context, id string) (*domain.User, error)
+	GetByEmail(ctx context.Context, email string) (*domain.User, error)
+	Create(ctx context.Context, task *domain.User) error
+	Update(ctx context.Context, task *domain.User) error
+	Delete(ctx context.Context, id string) error
+}
+
 type useCase struct {
-	repo   domain.Repository
+	repo   Repository
 	hasher hasher.Hasher
 }
 
-func New(repo domain.Repository, hasher hasher.Hasher) UseCase {
+func New(repo Repository, hasher hasher.Hasher) UseCase {
 	return &useCase{
 		repo:   repo,
 		hasher: hasher,

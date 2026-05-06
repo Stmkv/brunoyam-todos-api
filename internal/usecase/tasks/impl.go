@@ -7,11 +7,19 @@ import (
 	"github.com/google/uuid"
 )
 
-type useCase struct {
-	repo domain.Repository
+type Repository interface {
+	GetAll(ctx context.Context) ([]*domain.Task, error)
+	GetByID(ctx context.Context, id string) (*domain.Task, error)
+	Create(ctx context.Context, task *domain.Task) error
+	Update(ctx context.Context, task *domain.Task) error
+	Delete(ctx context.Context, id string) error
 }
 
-func New(repo domain.Repository) UseCase {
+type useCase struct {
+	repo Repository
+}
+
+func New(repo Repository) UseCase {
 	return &useCase{
 		repo: repo,
 	}
