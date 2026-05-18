@@ -2,8 +2,9 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
-	"todos-api/internal/app"
+	"time"
 	"todos-api/internal/config"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -28,6 +29,7 @@ import (
 // @description Enter: Bearer <token>
 
 func main() {
+	ctx := context.Background()
 	_ = godotenv.Load()
 
 	cfg := config.MustLoad()
@@ -37,8 +39,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if err := db.Ping(context.Background()); err == nil {
-		app.RunMigrations(cfg.DatabaseURL)
+	if err := waitForDB(ctx, db); err != nil {
+		log.Fatal(err)
 	}
 
 	var tr taskUsecase.Repository
@@ -67,4 +69,24 @@ func main() {
 	if err := srv.Run(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+func waitForDB(ctx context.Context, db *pgxpool.Pool) error {
+	maxAttempts := 5
+	baseDelay := time.Second * 2
+
+	for i := 0; i < maxAttempts; i++ {
+		err := db.Ping(ctx)
+		if err == nil {
+			return nil
+		}
+		log.Printf(
+			"Waiting for database to be ready... attempt #%d, max attempts %d",
+			i,
+			maxAttempts,
+		)
+		time.Sleep(baseDelay)
+		baseDelay += 2
+	}
+	return fmt.Errorf("timed out waiting for database to become available")
 }
