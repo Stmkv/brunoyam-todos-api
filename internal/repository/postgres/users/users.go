@@ -74,10 +74,10 @@ func (r *Repository) Create(ctx context.Context, user *domain.User) error {
 		return domain.ErrUserIsNil
 	}
 	_, err := r.db.Exec(ctx,
-		`INSERT INTO users (uid, name, email, password) VALUES ($1, $2, $3, $4)`,
+		`INSERT INTO users (uid, email, name, password) VALUES ($1, $2, $3, $4)`,
 		user.UID,
-		user.Name,
 		user.Email,
+		user.Name,
 		user.Password,
 	)
 

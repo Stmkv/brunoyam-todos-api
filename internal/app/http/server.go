@@ -11,6 +11,7 @@ import (
 	tasksUsecase "todos-api/internal/usecase/tasks"
 	usersUsecase "todos-api/internal/usecase/users"
 
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -53,6 +54,9 @@ func configureRouter(
 	parser middleware.TokenParser,
 ) *gin.Engine {
 	r := gin.Default()
+
+	r.Use(middleware.GzipRequestMiddleware())
+	r.Use(gzip.Gzip(gzip.DefaultCompression))
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 

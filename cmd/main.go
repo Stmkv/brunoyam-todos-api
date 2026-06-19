@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"time"
+	"todos-api/internal/app"
 	"todos-api/internal/config"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -33,7 +34,7 @@ func main() {
 	_ = godotenv.Load()
 
 	cfg := config.MustLoad()
-
+	app.RunMigrations(cfg.DatabaseURL)
 	db, err := pgxpool.New(context.Background(), cfg.DatabaseURL)
 	if err != nil {
 		log.Fatal(err)
